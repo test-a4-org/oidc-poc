@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - name: Get OIDC Token and decode claims
+      - name: Decode OIDC Token Claims
         uses: actions/github-script@v7
         with:
           script: |
@@ -28,7 +28,16 @@ jobs:
             core.info('aud: ' + payload.aud)
             core.info('ref: ' + payload.ref)
             core.info('environment: ' + (payload.environment || 'none'))
-            core.info('repository: ' + payload.repository)
-            core.info('Full sub claim: ' + payload.sub)
-            core.setOutput('sub_claim', payload.sub)
-            core.setOutput('full_token', token)
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::526958954020:role/github-oidc-poc
+          aws-region: us-east-1
+
+      - name: Prove AWS Access
+        run: |
+          echo "=== AWS Identity ==="
+          aws sts get-caller-identity
+          echo ""
+          echo "=== SUCCESS: Assumed AWS role via OIDC ==="
